@@ -16,8 +16,28 @@ function Booking() {
   const calendarRef = useRef(null);
 
   // 日历数据
-  const daysOfWeek = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
-  const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  const daysOfWeek = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+  const monthNames = ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月'];
+  
+  // 模拟不可选择的日期（已满或休息日）
+  const unavailableDates = [
+    '2025-03-10', // 已满
+    '2025-03-15', // 休息日
+    '2025-03-20', // 已满
+    '2025-04-01'  // 休息日
+  ];
+  
+  // 检查日期是否不可用
+  const isDateUnavailable = (dateStr) => {
+    return unavailableDates.includes(dateStr);
+  };
+  
+  // 获取日期状态信息
+  const getDateStatus = (dateStr) => {
+    const index = unavailableDates.indexOf(dateStr);
+    if (index === -1) return null;
+    return index % 2 === 0 ? '已满' : '休息';
+  };
   
   // 模拟当前用户信息 - 仅用于预览
   const currentUser = {
@@ -50,7 +70,9 @@ function Booking() {
         date: new Date(year, month - 1, prevMonthDays - firstDay + i + 1),
         isCurrentMonth: false,
         isSelected: false,
-        isToday: false
+        isToday: false,
+        isUnavailable: false,
+        status: null
       });
     }
     
@@ -59,6 +81,8 @@ function Booking() {
     const selectedDateObj = new Date(selectedDate);
     for (let i = 1; i <= daysInMonth; i++) {
       const date = new Date(year, month, i);
+      const dateStr = formatDate(date);
+      const unavailable = isDateUnavailable(dateStr);
       days.push({
         date,
         isCurrentMonth: true,
@@ -67,7 +91,9 @@ function Booking() {
                     selectedDateObj.getDate() === date.getDate(),
         isToday: today.getFullYear() === date.getFullYear() && 
                 today.getMonth() === date.getMonth() && 
-                today.getDate() === date.getDate()
+                today.getDate() === date.getDate(),
+        isUnavailable: unavailable,
+        status: getDateStatus(dateStr)
       });
     }
     
@@ -78,7 +104,9 @@ function Booking() {
         date: new Date(year, month + 1, i),
         isCurrentMonth: false,
         isSelected: false,
-        isToday: false
+        isToday: false,
+        isUnavailable: false,
+        status: null
       });
     }
     
@@ -205,47 +233,87 @@ function Booking() {
               </div>
             </div>
             
-            {/* 自定义日历控件 */}
+            {/* 自定义日历控件 - 全屏浮层 */}
             {showCalendar && (
-              <div 
-                ref={calendarRef}
-                className="absolute z-20 mt-1 bg-white rounded-lg shadow-lg border border-gray p-4 w-full max-w-xs"
-              >
-                <div className="flex justify-between items-center mb-4">
-                  <button 
-                    onClick={() => changeMonth(-1)}
-                    className="text-dark-gray hover:text-primary"
-                  >
-                    <i className="fas fa-chevron-left"></i>
-                  </button>
-                  <div className="font-bold">
-                    {monthNames[currentMonth.getMonth()]} {currentMonth.getFullYear()}
-                  </div>
-                  <button 
-                    onClick={() => changeMonth(1)}
-                    className="text-dark-gray hover:text-primary"
-                  >
-                    <i className="fas fa-chevron-right"></i>
-                  </button>
-                </div>
-                
-                <div className="grid grid-cols-7 gap-1 text-center">
-                  {daysOfWeek.map((day, index) => (
-                    <div key={index} className="text-xs font-medium text-dark-gray py-1">
-                      {day}
-                    </div>
-                  ))}
-                  
-                  {getDaysInMonth(currentMonth.getFullYear(), currentMonth.getMonth()).map((day, index) => (
-                    <button
-                      key={index}
-                      onClick={() => handleDateSelect(formatDate(day.date))}
-                      disabled={day.date < new Date()}
-                      className={`w-8 h-8 rounded-full flex items-center justify-center text-sm ${day.isSelected ? 'bg-primary text-white' : ''} ${!day.isCurrentMonth ? 'text-gray-300' : ''} ${day.isToday ? 'border border-primary' : ''} ${day.date < new Date() ? 'opacity-50 cursor-not-allowed' : 'hover:bg-primary/10'}`}
+              <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+                <div 
+                  ref={calendarRef}
+                  className="bg-white rounded-xl shadow-xl w-full max-w-md p-6 space-y-4"
+                >
+                  <div className="flex justify-between items-center">
+                    <button 
+                      onClick={() => setShowCalendar(false)}
+                      className="text-dark-gray hover:text-primary"
                     >
-                      {day.date.getDate()}
+                      <i className="fas fa-times"></i>
                     </button>
-                  ))}
+                    <h3 className="text-lg font-bold">选择日期</h3>
+                    <div className="w-5"></div> {/* 占位元素，保持标题居中 */}
+                  </div>
+                  
+                  <div className="flex justify-between items-center py-2">
+                    <button 
+                      onClick={() => changeMonth(-1)}
+                      className="w-10 h-10 rounded-full flex items-center justify-center text-dark-gray hover:bg-light-gray"
+                    >
+                      <i className="fas fa-chevron-left"></i>
+                    </button>
+                    <div className="font-bold text-lg">
+                      {monthNames[currentMonth.getMonth()]} {currentMonth.getFullYear()}
+                    </div>
+                    <button 
+                      onClick={() => changeMonth(1)}
+                      className="w-10 h-10 rounded-full flex items-center justify-center text-dark-gray hover:bg-light-gray"
+                    >
+                      <i className="fas fa-chevron-right"></i>
+                    </button>
+                  </div>
+                  
+                  <div className="grid grid-cols-7 gap-2 text-center">
+                    {daysOfWeek.map((day, index) => (
+                      <div key={index} className="text-sm font-medium text-dark-gray py-2">
+                        {day}
+                      </div>
+                    ))}
+                    
+                    {getDaysInMonth(currentMonth.getFullYear(), currentMonth.getMonth()).map((day, index) => (
+                      <div key={index} className="relative">
+                        <button
+                          onClick={() => !day.isUnavailable && day.date >= new Date() && handleDateSelect(formatDate(day.date))}
+                          disabled={day.date < new Date() || day.isUnavailable}
+                          className={`
+                            w-11 h-11 rounded-full flex items-center justify-center text-sm relative
+                            ${day.isSelected ? 'bg-primary text-white' : ''} 
+                            ${!day.isCurrentMonth ? 'text-gray-300' : ''} 
+                            ${day.isToday ? 'border-2 border-primary' : ''} 
+                            ${(day.date < new Date() || day.isUnavailable) ? 'opacity-50 cursor-not-allowed' : 'hover:bg-primary/10'}
+                          `}
+                        >
+                          {day.date.getDate()}
+                        </button>
+                        {day.isUnavailable && day.isCurrentMonth && (
+                          <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 text-xs px-1 py-0.5 bg-red-100 text-red-500 rounded-sm whitespace-nowrap">
+                            {day.status}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  
+                  <div className="pt-2 flex justify-between items-center text-sm text-dark-gray">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full border-2 border-primary"></div>
+                      <span>今天</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-primary"></div>
+                      <span>已选</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-red-100"></div>
+                      <span>不可选</span>
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
@@ -295,10 +363,27 @@ function Booking() {
           />
         </div>
 
-        <div className="bg-light-gray p-4 rounded-lg space-y-2">
-          <div className="flex justify-between text-sm">
-            <span className="text-dark-gray">订金（每位¥200）</span>
-            <span className="font-medium">¥{200 * guestCount}</span>
+        <div className="bg-light-gray p-5 rounded-lg space-y-3 border border-gray/20">
+          <div className="flex justify-between items-center">
+            <span className="text-dark-gray font-medium">费用明细</span>
+            <span className="text-xs text-primary">预付订金，到店支付余额</span>
+          </div>
+          <div className="h-px bg-gray/20 my-1"></div>
+          <div className="flex justify-between items-center">
+            <div>
+              <span className="text-dark-gray">订金</span>
+              <span className="text-xs text-dark-gray ml-2">¥200 × {guestCount}人</span>
+            </div>
+            <span className="text-lg font-medium text-price">¥{200 * guestCount}</span>
+          </div>
+          <div className="flex justify-between items-center text-sm">
+            <span className="text-dark-gray">到店需付</span>
+            <span className="font-medium">¥{718 * guestCount - 200 * guestCount}</span>
+          </div>
+          <div className="h-px bg-gray/20 my-1"></div>
+          <div className="flex justify-between items-center">
+            <span className="text-dark-gray font-medium">总价</span>
+            <span className="text-lg font-bold text-price">¥{718 * guestCount}</span>
           </div>
         </div>
       </div>
