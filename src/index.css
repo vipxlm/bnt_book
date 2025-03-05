@@ -1,0 +1,31 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --primary-color: #DC5F00;
+  --secondary-color: #EEEEEE;
+  --text-color: #373A40;
+  --light-gray: #EEEEEE;
+  --gray: #686D76;
+  --dark-gray: #373A40;
+  --gradient-start: #DC5F00;
+  --gradient-end: #DC5F00;
+  --card-bg: #B17457;
+  --special-color: #DC5F00;
+  --accent-color: #DC5F00;
+  --price-color: #373A40;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+}
+
+body {
+  background-color: var(--light-gray);
+  color: var(--text-color);
+  min-height: 100vh;
+}
