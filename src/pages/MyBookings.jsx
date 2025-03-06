@@ -137,7 +137,7 @@ function MyBookings() {
               <div className="h-px bg-gray/10"></div>
               
               {/* 支付信息 */}
-              <div className="flex justify-between items-center">
+              <div className="grid grid-cols-2 gap-4">
                 <div className="flex items-start gap-3">
                   <i className="fas fa-money-bill-wave mt-1 text-primary"></i>
                   <div>
@@ -173,13 +173,6 @@ function MyBookings() {
                 >
                   <i className="fas fa-info-circle mr-2"></i>查看详情
                 </button>
-                {booking.status === 'completed' && (
-                  <button
-                    className="flex-1 py-2 border border-primary text-primary rounded-lg hover:bg-primary hover:text-white transition-colors"
-                  >
-                    <i className="fas fa-star mr-2"></i>评价
-                  </button>
-                )}
               </div>
             </div>
           </div>

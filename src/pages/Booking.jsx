@@ -167,9 +167,22 @@ function Booking() {
       <div className="text-2xl font-bold bg-gradient-to-r from-gradient-start to-gradient-end bg-clip-text text-transparent">
         Table A Deli
       </div>
-      <div className="space-y-1">
-        <div className="text-price font-bold text-lg">¥718/位</div>
-        <div className="text-dark-gray">订金：¥200/位</div>
+      <div className="bg-light-gray/50 rounded-lg p-4 mt-3 border border-gray/10">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <i className="fas fa-tag text-primary"></i>
+            <span className="text-dark-gray">人均价格</span>
+          </div>
+          <div className="text-price font-bold text-2xl">¥718/位</div>
+        </div>
+        <div className="h-px bg-gray/20 my-3"></div>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <i className="fas fa-money-bill-wave text-primary"></i>
+            <span className="text-dark-gray">预付订金</span>
+          </div>
+          <div className="font-medium text-lg">¥200/位</div>
+        </div>
       </div>
 
       {/* Progress Steps */}
