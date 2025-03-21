@@ -1,16 +1,18 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { API_URL, API_ENDPOINTS } from '../config/config';
 
 function Register() {
   const navigate = useNavigate();
-  const [countdown, setCountdown] = useState(0);
   const [formData, setFormData] = useState({
     phone: '',
-    verificationCode: '',
-    password: '',
     name: '',
-    gender: '先生'
+    gender: '先生',
+    password: '',
+    verificationCode: ''
   });
+  const [countdown, setCountdown] = useState(0);
+  const [error, setError] = useState('');
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -20,26 +22,93 @@ function Register() {
     }));
   };
 
-  const handleSendCode = () => {
+  useEffect(() => {
+    let timer;
+    if (countdown > 0) {
+      timer = setInterval(() => {
+        setCountdown(prev => prev - 1);
+      }, 1000);
+    }
+    return () => {
+      if (timer) clearInterval(timer);
+    };
+  }, [countdown]);
+
+  const handleSendCode = async () => {
     if (countdown > 0 || !formData.phone || !/^1\d{10}$/.test(formData.phone)) return;
-    
-    // 这里添加发送验证码的逻辑
-    setCountdown(60);
-    const timer = setInterval(() => {
-      setCountdown(prev => {
-        if (prev <= 1) {
-          clearInterval(timer);
-          return 0;
-        }
-        return prev - 1;
+
+    try {
+      const response = await fetch(`${API_URL}/auth/send-code`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          phone: formData.phone
+        })
       });
-    }, 1000);
+
+      const data = await response.json();
+
+      if (data.status_code === 200) {
+        setCountdown(60);
+      } else {
+        setError(typeof data.detail === 'string' ? data.detail : '发送验证码失败，请重试');
+      }
+    } catch (err) {
+      setError('网络错误，请稍后重试');
+    }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // 这里添加注册逻辑
-    navigate('/login');
+    setError('');
+
+    try {
+      const response = await fetch(`${API_URL}${API_ENDPOINTS.auth.register}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          phone: formData.phone,
+          name: formData.name,
+          gender: formData.gender,
+          password: formData.password,
+          verification_code: formData.verificationCode
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.status_code === 200) {
+        navigate('/login');
+      } else {
+        // 根据状态码显示对应的错误信息
+        const errorMessage = typeof data.detail === 'string' ? data.detail : null;
+        switch (data.status_code) {
+          case 400:
+            setError(errorMessage || '请求参数错误');
+            break;
+          case 401:
+            setError(errorMessage || '未授权或登录已过期');
+            break;
+          case 403:
+            setError(errorMessage || '权限不足');
+            break;
+          case 404:
+            setError(errorMessage || '请求的资源不存在');
+            break;
+          case 500:
+            setError(errorMessage || '服务器内部错误');
+            break;
+          default:
+            setError(errorMessage || '注册失败，请重试');
+        }
+      }
+    } catch (err) {
+      setError('网络错误，请稍后重试');
+    }
   };
 
   return (
@@ -56,6 +125,11 @@ function Register() {
 
         {/* Register Form */}
         <form onSubmit={handleSubmit} className="space-y-6">
+          {error && (
+            <div className="p-3 text-sm text-red-600 bg-red-50 rounded-lg">
+              {error}
+            </div>
+          )}
           <div className="space-y-2">
             <label className="block text-sm font-medium text-text-base">手机号</label>
             <input

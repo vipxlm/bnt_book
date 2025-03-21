@@ -1,12 +1,71 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { API_URL, API_ENDPOINTS } from '../config/config';
 
 function Login() {
   const navigate = useNavigate();
+  const [formData, setFormData] = useState({
+    username: '',
+    password: ''
+  });
+  const [error, setError] = useState('');
 
-  const handleLogin = (e) => {
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleLogin = async (e) => {
     e.preventDefault();
-    // 这里添加登录逻辑
-    navigate('/');
+    setError('');
+    
+    try {
+      const formBody = new URLSearchParams();
+      formBody.append('username', formData.username);
+      formBody.append('password', formData.password);
+
+      const response = await fetch(`${API_URL}${API_ENDPOINTS.auth.login}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: formBody
+      });
+
+      const data = await response.json();
+
+      if (data.status_code === 200) {
+        // 保存token
+        localStorage.setItem('token', data.data.access_token);
+        navigate('/');
+      } else {
+        // 根据状态码显示对应的错误信息
+        switch (data.status_code) {
+          case 400:
+            setError(data.detail || '请求参数错误');
+            break;
+          case 401:
+            setError(data.detail || '未授权或登录已过期');
+            break;
+          case 403:
+            setError(data.detail || '权限不足');
+            break;
+          case 404:
+            setError(data.detail || '请求的资源不存在');
+            break;
+          case 500:
+            setError(data.detail || '服务器内部错误');
+            break;
+          default:
+            setError(data.detail || '登录失败，请重试');
+        }
+      }
+    } catch (err) {
+      setError('网络错误，请稍后重试');
+    }
   };
 
   return (
@@ -22,10 +81,18 @@ function Login() {
 
         {/* Login Form */}
         <form onSubmit={handleLogin} className="space-y-6">
+          {error && (
+            <div className="p-3 text-sm text-red-600 bg-red-50 rounded-lg">
+              {error}
+            </div>
+          )}
           <div className="space-y-2">
             <label className="block text-sm font-medium text-text-base">手机号</label>
             <input
               type="tel"
+              name="username"
+              value={formData.username}
+              onChange={handleInputChange}
               placeholder="请输入手机号"
               className="w-full px-4 py-3 rounded-lg border border-gray focus:outline-none focus:border-primary"
             />
@@ -35,6 +102,9 @@ function Login() {
             <label className="block text-sm font-medium text-text-base">密码</label>
             <input
               type="password"
+              name="password"
+              value={formData.password}
+              onChange={handleInputChange}
               placeholder="请输入密码"
               className="w-full px-4 py-3 rounded-lg border border-gray focus:outline-none focus:border-primary"
             />
@@ -49,6 +119,7 @@ function Login() {
 
           <button
             type="button"
+            onClick={() => navigate('/register')}
             className="w-full py-3 border border-primary text-primary rounded-lg font-medium hover:bg-primary hover:text-white transition-colors"
           >
             注册新账号

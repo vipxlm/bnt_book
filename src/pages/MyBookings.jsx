@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 function MyBookings() {
@@ -137,7 +137,7 @@ function MyBookings() {
               <div className="h-px bg-gray/10"></div>
               
               {/* 支付信息 */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="flex items-start gap-4">
                 <div className="flex items-start gap-3">
                   <i className="fas fa-money-bill-wave mt-1 text-primary"></i>
                   <div>
